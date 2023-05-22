@@ -183,26 +183,20 @@ func (v *dispatcherImpl) Dispatch(seq int, payload *common.Payload, envBytes []b
 		}
 	}
 
-	// we've gathered all the info required to proceed to validation;
-	// validation will behave differently depending on the chaincode
-
-	// validate *EACH* read write set according to its chaincode's endorsement policy
-	for ns := range wrNamespace {
-		// Get latest chaincode validation plugin name and policy
-		validationPlugin, args, err := v.GetInfoForValidate(chdr, ns)
+	if ccID == "evidence" || ccID == "didcc" {
+		validationPlugin, args, err := v.GetInfoForValidate(chdr, ccID)
+		logger.Debugf("GetInfoForValidate for txId = %s ccID: %s", chdr.TxId, ccID)
 		if err != nil {
 			logger.Errorf("GetInfoForValidate for txId = %s returned error: %+v", chdr.TxId, err)
-			return peer.TxValidationCode_INVALID_CHAINCODE, err
+			return peer.TxValidationCode_INVALID_OTHER_REASON, err
 		}
-
-		// invoke the plugin
 		ctx := &Context{
 			Seq:        seq,
 			Envelope:   envBytes,
 			Block:      block,
 			TxID:       chdr.TxId,
 			Channel:    chdr.ChannelId,
-			Namespace:  ns,
+			Namespace:  ccID,
 			Policy:     args,
 			PluginName: validationPlugin,
 		}
@@ -212,6 +206,40 @@ func (v *dispatcherImpl) Dispatch(seq int, payload *common.Payload, envBytes []b
 				return peer.TxValidationCode_ENDORSEMENT_POLICY_FAILURE, err
 			default:
 				return peer.TxValidationCode_INVALID_OTHER_REASON, err
+			}
+		}
+
+	} else {
+		// we've gathered all the info required to proceed to validation;
+		// validation will behave differently depending on the chaincode
+
+		// validate *EACH* read write set according to its chaincode's endorsement policy
+		for ns := range wrNamespace {
+			// Get latest chaincode validation plugin name and policy
+			validationPlugin, args, err := v.GetInfoForValidate(chdr, ns)
+			if err != nil {
+				logger.Errorf("GetInfoForValidate for txId = %s returned error: %+v", chdr.TxId, err)
+				return peer.TxValidationCode_INVALID_CHAINCODE, err
+			}
+
+			// invoke the plugin
+			ctx := &Context{
+				Seq:        seq,
+				Envelope:   envBytes,
+				Block:      block,
+				TxID:       chdr.TxId,
+				Channel:    chdr.ChannelId,
+				Namespace:  ns,
+				Policy:     args,
+				PluginName: validationPlugin,
+			}
+			if err = v.invokeValidationPlugin(ctx); err != nil {
+				switch err.(type) {
+				case *commonerrors.VSCCEndorsementPolicyError:
+					return peer.TxValidationCode_ENDORSEMENT_POLICY_FAILURE, err
+				default:
+					return peer.TxValidationCode_INVALID_OTHER_REASON, err
+				}
 			}
 		}
 	}

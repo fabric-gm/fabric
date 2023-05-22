@@ -74,6 +74,8 @@ import (
 	"github.com/hyperledger/fabric/core/policy"
 	"github.com/hyperledger/fabric/core/scc"
 	"github.com/hyperledger/fabric/core/scc/cscc"
+	"github.com/hyperledger/fabric/core/scc/didcc"
+	"github.com/hyperledger/fabric/core/scc/evidence"
 	"github.com/hyperledger/fabric/core/scc/lscc"
 	"github.com/hyperledger/fabric/core/scc/qscc"
 	"github.com/hyperledger/fabric/core/transientstore"
@@ -607,6 +609,8 @@ func serve(args []string) error {
 		"lscc":       {},
 		"qscc":       {},
 		"cscc":       {},
+		"evidence":   {},
+		"didcc":      {},
 		"_lifecycle": {},
 	}
 
@@ -715,6 +719,8 @@ func serve(args []string) error {
 		factory.GetDefault(),
 	)
 	qsccInst := scc.SelfDescribingSysCC(qscc.New(aclProvider, peerInstance))
+	evidenceInst := scc.SelfDescribingSysCC(evidence.New())
+	didccInit := scc.SelfDescribingSysCC(didcc.New())
 
 	pb.RegisterChaincodeSupportServer(ccSrv.Server(), ccSupSrv)
 
@@ -762,7 +768,7 @@ func serve(args []string) error {
 	}
 
 	// deploy system chaincodes
-	for _, cc := range []scc.SelfDescribingSysCC{lsccInst, csccInst, qsccInst, lifecycleSCC} {
+	for _, cc := range []scc.SelfDescribingSysCC{lsccInst, csccInst, qsccInst, evidenceInst, didccInit, lifecycleSCC} {
 		if enabled, ok := chaincodeConfig.SCCAllowlist[cc.Name()]; !ok || !enabled {
 			logger.Infof("not deploying chaincode %s as it is not enabled", cc.Name())
 			continue
