@@ -192,6 +192,9 @@ func (c custodianLauncherAdapter) Stop(ccid string) error {
 func serve(args []string) error {
 	logger.Infof("Starting %s", version.GetInfo())
 
+	//fixme add evidence and didcc
+	viper.Set("chaincode.system.evidence", "enable")
+	viper.Set("chaincode.system.didcc", "enable")
 	// Info logging for peer config, includes core.yaml settings and environment variable overrides
 	allSettings := viper.AllSettings()
 	settingsYaml, err := yaml.Marshal(allSettings)

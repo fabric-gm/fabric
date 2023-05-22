@@ -638,12 +638,12 @@ chaincode:
 
     # enabled system chaincodes
     system:
-        _lifecycle: enable
-        evidence: enable
-        didcc: enable
-        cscc: enable
-        lscc: enable
-        qscc: enable
+      _lifecycle: enable
+      evidence: enable
+      didcc: enable
+      cscc: enable
+      lscc: enable
+      qscc: enable
 
     # Logging section for the chaincode container
     logging:
