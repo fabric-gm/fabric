@@ -646,11 +646,13 @@ var (
 	// currently defined system chaincode names that shouldn't
 	// be allowed as user-defined chaincode names
 	systemChaincodeNames = map[string]struct{}{
-		"cscc": {},
-		"escc": {},
-		"lscc": {},
-		"qscc": {},
-		"vscc": {},
+		"cscc":     {},
+		"escc":     {},
+		"lscc":     {},
+		"qscc":     {},
+		"vscc":     {},
+		"evidence": {},
+		"didcc":    {},
 	}
 )
 
